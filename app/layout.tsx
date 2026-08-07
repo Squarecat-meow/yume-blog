@@ -55,9 +55,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           />
           <div className="w-full h-24 md:h-40 flex-1 bg-linear-to-b from-[#A8CCF3] to-[#D0E4F9]" />
         </div>
-        <main className="w-full flex-1 px-6 md:px-36 z-2 mt-[10vh] md:mt-[30vh] bg-white">
-          <div className="flex flex-col gap-2 md:gap-2 md:flex-row justify-between items-center md:items-end">
-            <h1 className="font-song text-5xl">유메의 블로그</h1>
+        <main className="w-full flex-1 px-6 lg:px-36 z-2 mt-24 lg:mt-48 bg-white">
+          <div className="flex flex-col gap-2 lg:gap-2 lg:flex-row justify-between items-center lg:items-end">
+            <div className="flex flex-col">
+              <h1 className="font-song text-5xl">유메의 블로그</h1>
+              <span className="text-sm text-slate-400">
+                여기는 유메의 블로그가 될 공사현장입니다
+              </span>
+            </div>
             <Navbar />
           </div>
           <hr className="my-4 md:my-2 border-slate-400" />
