@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Image from "next/image";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -23,7 +24,32 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full relative flex flex-col">
+        <div className="w-full absolute inset-x-0 top-0 pointer-events-none">
+          <Image
+            src={"/assets/White_Cloud.svg"}
+            alt="white cloud"
+            width={1566}
+            height={308}
+            className="w-full h-auto absolute top-12 z-1"
+          />
+          <Image
+            src={"/assets/Blue_Cloud.svg"}
+            alt="blue cloud"
+            width={894}
+            height={262}
+            className="absolute w-1/2 md:w-auto top-12 right-1/6"
+          />
+          <Image
+            src={"/assets/Emblem.svg"}
+            alt="emblem"
+            width={168}
+            height={168}
+            className="absolute size-20 md:size-36 left-6 md:left-12 top-0"
+          />
+          <div className="w-full h-24 md:h-40 flex-1 bg-linear-to-b from-[#A8CCF3] to-[#D0E4F9]" />
+        </div>
+      </body>
     </html>
   );
 }
