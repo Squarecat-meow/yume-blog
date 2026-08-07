@@ -1,16 +1,22 @@
+import Navbar from "@/components/navbar";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Chiron_GoRound_TC, Inter, Song_Myung } from "next/font/google";
 import Image from "next/image";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const interSans = Inter({
+  variable: "--font-inter-sans",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+const songMyeongjo = Song_Myung({
+  variable: "--font-song-serif",
+  weight: "400",
+});
+
+const chironSans = Chiron_GoRound_TC({
+  variable: "--font-chiron-sans",
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -22,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${interSans.variable} ${songMyeongjo.variable} ${chironSans.variable} h-full antialiased`}
     >
       <body className="min-h-full relative flex flex-col">
         <div className="w-full absolute inset-x-0 top-0 pointer-events-none">
@@ -49,6 +55,14 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           />
           <div className="w-full h-24 md:h-40 flex-1 bg-linear-to-b from-[#A8CCF3] to-[#D0E4F9]" />
         </div>
+        <main className="w-full flex-1 px-6 md:px-36 z-2 mt-[10vh] md:mt-[30vh] bg-white">
+          <div className="flex flex-col gap-2 md:gap-2 md:flex-row justify-between items-center md:items-end">
+            <h1 className="font-song text-5xl">유메의 블로그</h1>
+            <Navbar />
+          </div>
+          <hr className="my-4 md:my-2 border-slate-400" />
+          {children}
+        </main>
       </body>
     </html>
   );
