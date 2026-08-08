@@ -65,7 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </div>
             <Navbar />
           </div>
-          <hr className="my-4 md:my-2 border-slate-400" />
+          <hr className="my-4 lg:my-4 border-slate-400" />
           {children}
         </main>
       </body>
