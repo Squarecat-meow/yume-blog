@@ -24,10 +24,18 @@ export type AccessIdentity = {
 
 type AccessConfig = {
   issuer: string;
-  audience: string;
+  /** Access 애플리케이션마다 AUD가 따로 발급되므로 여러 개를 받는다. */
+  audience: string[];
   allowedEmails: string[];
   jwks: ReturnType<typeof createRemoteJWKSet>;
 };
+
+function parseList(raw: string | undefined): string[] {
+  return (raw ?? '')
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean);
+}
 
 let cachedConfig: AccessConfig | null = null;
 
@@ -41,13 +49,12 @@ function getConfig(): AccessConfig | null {
   if (cachedConfig) return cachedConfig;
 
   const teamDomain = process.env.CF_ACCESS_TEAM_DOMAIN;
-  const audience = process.env.CF_ACCESS_AUD;
-  const allowedEmails = (process.env.ADMIN_ALLOWED_EMAILS ?? '')
-    .split(',')
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean);
+  const audience = parseList(process.env.CF_ACCESS_AUD);
+  const allowedEmails = parseList(process.env.ADMIN_ALLOWED_EMAILS).map(
+    (entry) => entry.toLowerCase(),
+  );
 
-  if (!teamDomain || !audience || allowedEmails.length === 0) {
+  if (!teamDomain || audience.length === 0 || allowedEmails.length === 0) {
     return null;
   }
 
@@ -99,7 +106,7 @@ export async function verifyAccessJwt(
   const config = getConfig();
   if (!config) {
     console.error(
-      '[access] CF_ACCESS_TEAM_DOMAIN / CF_ACCESS_AUD / ADMIN_ALLOWED_EMAILS 중 누락된 값이 있어 관리자 접근을 차단합니다.',
+      '[access] CF_ACCESS_TEAM_DOMAIN / CF_ACCESS_AUD / ADMIN_ALLOWED_EMAILS 중 비어 있는 값이 있어 관리자 접근을 차단합니다.',
     );
     return null;
   }
@@ -107,6 +114,7 @@ export async function verifyAccessJwt(
   try {
     const { payload } = await jwtVerify(token, config.jwks, {
       // audience를 빠뜨리면 같은 팀의 다른 Access 애플리케이션 토큰으로도 통과된다.
+      // 배열을 넘기면 그중 하나와 일치할 때만 통과한다.
       issuer: config.issuer,
       audience: config.audience,
       algorithms: ['RS256'],
