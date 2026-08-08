@@ -55,7 +55,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           />
           <div className="w-full h-24 md:h-40 flex-1 bg-linear-to-b from-[#A8CCF3] to-[#D0E4F9]" />
         </div>
-        <main className="w-full flex-1 px-6 lg:px-36 z-2 mt-24 lg:mt-48 bg-white">
+        <header className="w-full px-6 lg:px-36 z-2 mt-24 lg:mt-48">
           <div className="flex flex-col gap-2 lg:gap-2 lg:flex-row justify-between items-center lg:items-end">
             <div className="flex flex-col">
               <h1 className="font-song text-5xl">유메의 블로그</h1>
@@ -66,6 +66,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             <Navbar />
           </div>
           <hr className="my-4 lg:my-4 border-slate-400" />
+        </header>
+        <main className="flex-1 flex flex-col px-6 lg:px-36 bg-white z-2">
           {children}
         </main>
       </body>
