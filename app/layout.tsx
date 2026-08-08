@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Chiron_GoRound_TC, Inter, Song_Myung } from "next/font/google";
 import Image from "next/image";
 import "./globals.css";
+import Footer from "@/components/footer";
 
 const interSans = Inter({
   variable: "--font-inter-sans",
@@ -70,6 +71,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main className="flex-1 flex flex-col px-6 lg:px-36 bg-white z-2">
           {children}
         </main>
+        <Footer />
       </body>
     </html>
   );

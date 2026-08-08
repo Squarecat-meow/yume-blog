@@ -46,9 +46,6 @@ export default function Navbar() {
             </li>
           );
         })}
-        <li>
-          <Link href={'/login'}>🔑</Link>
-        </li>
       </ul>
     </nav>
   );
