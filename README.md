@@ -15,6 +15,18 @@ pnpm dev
 
 Cloudflare Access 애플리케이션을 아직 만들지 않았다면 `.env.local`에 `ADMIN_DEV_BYPASS=true`를 두세요. `NODE_ENV=development`일 때만 동작하므로 프로덕션 빌드에서는 무시됩니다. 이 플래그가 없으면 `/admin`은 로컬에서도 404입니다(fail-closed).
 
+## 테스트
+
+```bash
+pnpm test         # 1회 실행
+pnpm test:watch   # 감시 모드
+```
+
+- `lib/access.test.ts` — 로컬 JWKS 서버를 띄우고 실제 RSA 키로 토큰을 서명해 Access JWT 검증을 확인합니다. 서명 위조, 다른 앱의 `aud`, 만료, 허용 목록, 서비스 토큰을 다룹니다.
+- `lib/admin-guard.test.ts` — 관리자 진입점이 가드를 **호출하는지** 검사합니다. `proxy.ts`를 지우면서 사라진 matcher의 안전망을 대신합니다. 미들웨어 파일이 되살아나는 것도 함께 막습니다.
+
+async 서버 컴포넌트는 Vitest가 지원하지 않으므로 테스트하지 않습니다. 필요해지면 Playwright로 다룹니다.
+
 ## 배포 전 준비 (Cloudflare Workers)
 
 아직 아무것도 세팅하지 않았습니다. 배포 직전에 아래 순서로 진행합니다.
