@@ -15,6 +15,37 @@ pnpm dev
 
 Cloudflare Access 애플리케이션을 아직 만들지 않았다면 `.env.local`에 `ADMIN_DEV_BYPASS=true`를 두세요. `NODE_ENV=development`일 때만 동작하므로 프로덕션 빌드에서는 무시됩니다. 이 플래그가 없으면 `/admin`은 로컬에서도 404입니다(fail-closed).
 
+## Notion 연동
+
+`lib/notion.ts`가 Notion을 CMS로 쓰기 위한 조회 함수를 제공합니다.
+
+- `getPublishedPosts()` — Status가 Published인 포스트를 PublishedAt 내림차순으로 조회
+- `getPostBySlug(slug)` — Status=Published AND Slug=slug로 단건 조회
+
+기대하는 Notion 데이터베이스 스키마:
+
+| 속성 | 타입 |
+| --- | --- |
+| `Title` | title |
+| `Slug` | rich_text |
+| `Status` | select (`Draft` \| `Published`) |
+| `Tags` | multi_select |
+| `PublishedAt` | date |
+| `Summary` | rich_text |
+
+데이터베이스를 만든 뒤 Notion 인테그레이션과 반드시 공유(Connect)해야 조회가 됩니다.
+
+필요한 환경변수는 `.env.example` 참고 (`NOTION_API_KEY`, `NOTION_DATA_SOURCE_ID`). `NOTION_API_KEY`는 DB 없이 `.env.local`(로컬) / `wrangler secret`(배포)로만 관리합니다 — 앱 안에 키를 저장·수정하는 화면은 두지 않습니다.
+
+**`NOTION_DATA_SOURCE_ID`는 `database_id`가 아닙니다.** 2025-09-03 API부터 database와 data source가 분리돼서, Notion URL 주소창에 보이는 ID를 그대로 쓰면 400/404가 납니다. 아래처럼 한 번 조회해서 얻어야 합니다:
+
+```ts
+const db = await client.databases.retrieve({ database_id: '<URL의 ID>' });
+db.data_sources[0].id; // 이게 NOTION_DATA_SOURCE_ID
+```
+
+**다음 단계(본문 렌더링) 관련 메모**: react-notion-x는 `@notionhq/client`가 반환하는 블록 포맷을 읽지 못합니다. 비공식 `notion-client`(recordMap 방식)가 필요하고, 이건 Notion 페이지가 "웹에 공유" 상태여야 하며 인증 모델도 다릅니다. 렌더러를 붙일 때 다시 검토합니다.
+
 ## 테스트
 
 ```bash
