@@ -19,19 +19,21 @@ Cloudflare Access 애플리케이션을 아직 만들지 않았다면 `.env.loca
 
 `lib/notion.ts`가 Notion을 CMS로 쓰기 위한 조회 함수를 제공합니다.
 
-- `getPublishedPosts()` — Status가 Published인 포스트를 PublishedAt 내림차순으로 조회
-- `getPostBySlug(slug)` — Status=Published AND Slug=slug로 단건 조회
+- `getPublishedPosts()` — 상태가 발행인 포스트를 발행일 내림차순으로 조회
+- `getPostBySlug(slug)` — 상태=발행 AND 글 URL=slug로 단건 조회
 
-기대하는 Notion 데이터베이스 스키마:
+기대하는 Notion 데이터베이스 스키마 (속성 이름은 한글):
 
 | 속성 | 타입 |
 | --- | --- |
-| `Title` | title |
-| `Slug` | rich_text |
-| `Status` | select (`Draft` \| `Published`) |
-| `Tags` | multi_select |
-| `PublishedAt` | date |
-| `Summary` | rich_text |
+| `제목` | title |
+| `글 URL` | rich_text |
+| `상태` | select (`초안` \| `발행`) |
+| `태그` | multi_select |
+| `발행일` | date |
+| `요약` | rich_text |
+
+`글 URL`은 개발 용어로는 slug — 그 글의 페이지 주소(`/posts/<이 값>`)에 그대로 들어갑니다. 겹치지 않게, 되도록 나중에 바꾸지 않도록 정해주세요.
 
 데이터베이스를 만든 뒤 Notion 인테그레이션과 반드시 공유(Connect)해야 조회가 됩니다.
 
