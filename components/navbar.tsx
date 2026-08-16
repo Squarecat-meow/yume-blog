@@ -15,8 +15,8 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="font-sans">
-      <ul className="flex items-center gap-4">
+    <nav className='font-sans text-sm lg:text-base'>
+      <ul className='flex items-center gap-4'>
         {navItems.map((item) => {
           const isActive = pathname === item.href;
 
@@ -24,7 +24,7 @@ export default function Navbar() {
             <li key={item.href}>
               <Link
                 href={item.href}
-                className="group relative flex items-center gap-1"
+                className='group relative flex items-center gap-1'
               >
                 <div
                   className={`transition-all duration-300 ${
