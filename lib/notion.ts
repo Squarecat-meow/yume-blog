@@ -5,7 +5,7 @@ import type {
 } from '@notionhq/client/build/src/api-endpoints';
 import { unstable_cache } from 'next/cache';
 import { PROP, PROP_NOVEL, STATUS_PUBLISHED } from '@/types/notion';
-import type { Novel, NotionBlock, Post } from '@/types/notion';
+import type { Novel, NotionBlock, NovelChapter, Post } from '@/types/notion';
 
 /**
  * Notion 쪽 편집을 감지해 즉시 무효화하는 웹훅은 없다. 시간 기반으로만 재검증한다.
@@ -114,6 +114,7 @@ function toNovel(page: PageObjectResponse): Novel | null {
   const tagsProp = properties[PROP_NOVEL.tags];
   const publishedAtProp = properties[PROP_NOVEL.publishedAt];
   const featuredProp = properties[PROP_NOVEL.featured];
+  const coverProp = properties[PROP_NOVEL.cover];
 
   if (titleProp?.type !== 'title' || slugProp?.type !== 'url') {
     return null;
@@ -140,8 +141,24 @@ function toNovel(page: PageObjectResponse): Novel | null {
       : null;
   const featured =
     featuredProp?.type === 'checkbox' ? featuredProp.checkbox : false;
+  const coverFile =
+    coverProp?.type === 'files' ? coverProp.files[0] : undefined;
+  const cover = coverFile
+    ? coverFile.type === 'external'
+      ? coverFile.external.url
+      : coverFile.file.url
+    : null;
 
-  return { id: page.id, slug, title, summary, tags, publishedAt, featured };
+  return {
+    id: page.id,
+    slug,
+    title,
+    summary,
+    tags,
+    publishedAt,
+    featured,
+    cover,
+  };
 }
 
 async function queryDataSource<T>(
@@ -277,6 +294,72 @@ export const getPublishedNovels = unstable_cache(
       select: { equals: STATUS_PUBLISHED },
     }),
   ['notion-published-novels'],
+  { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAG_NOVELS] },
+);
+
+export const getNovelBySlug = unstable_cache(
+  async (slug: string): Promise<Novel | null> => {
+    const novels = await queryNovels({
+      and: [
+        { property: PROP_NOVEL.status, select: { equals: STATUS_PUBLISHED } },
+        { property: PROP_NOVEL.slug, url: { equals: slug } },
+      ],
+    });
+    return novels[0] ?? null;
+  },
+  ['notion-novel-by-slug'],
+  { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAG_NOVELS] },
+);
+
+async function fetchChildPages(
+  pageId: string,
+): Promise<{ id: string; title: string }[]> {
+  const client = getClient();
+  const pages: { id: string; title: string }[] = [];
+  let cursor: string | undefined;
+
+  do {
+    const response = await client.blocks.children.list({
+      block_id: pageId,
+      start_cursor: cursor,
+    });
+
+    for (const block of response.results) {
+      if (!isFullBlock(block) || block.type !== 'child_page') continue;
+      pages.push({ id: block.id, title: block.child_page.title });
+    }
+
+    cursor = response.has_more
+      ? (response.next_cursor ?? undefined)
+      : undefined;
+  } while (cursor);
+
+  return pages;
+}
+
+/**
+ * 소설 페이지 하위의 챕터 목록. 챕터는 별도 DB가 아니라 소설 페이지의
+ * 하위 Notion 페이지로 관리하므로, 별도 slug/순서 속성 없이 Notion에서
+ * 정렬된 순서 그대로 1부터 인덱스를 매긴다.
+ */
+export const getNovelChapters = unstable_cache(
+  async (novelPageId: string): Promise<NovelChapter[]> => {
+    const pages = await fetchChildPages(novelPageId);
+    return pages.map((page, i) => ({ ...page, index: i + 1 }));
+  },
+  ['notion-novel-chapters'],
+  { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAG_NOVELS] },
+);
+
+/**
+ * 챕터(하위 페이지) 본문의 블록 트리. getPostBlocks와 동일하게
+ * fetchBlockChildren을 재사용한다 — 페이지 id만 있으면 되므로
+ * Post/Novel 여부와 무관하게 그대로 쓸 수 있다.
+ */
+export const getNovelChapterBlocks = unstable_cache(
+  async (chapterId: string): Promise<NotionBlock[]> =>
+    fetchBlockChildren(chapterId),
+  ['notion-novel-chapter-blocks'],
   { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAG_NOVELS] },
 );
 

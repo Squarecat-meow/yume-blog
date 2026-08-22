@@ -33,6 +33,7 @@ export const PROP = {
  * - 발행일 (Notion의 "마지막 편집 시간" 시스템 속성을 그대로 매핑)
  * - 요약 (rich_text)
  * - 추천 (checkbox) — 메인 화면 featured 노출 여부. 여러 개 체크돼 있으면 그중 가장 최근 글을 쓴다.
+ * - 표지 (files & media) — 목록에서 책 표지처럼 보여줄 세로 이미지. 여러 장 넣어도 첫 장만 쓴다.
  */
 export const PROP_NOVEL = {
   title: '제목',
@@ -42,6 +43,7 @@ export const PROP_NOVEL = {
   publishedAt: '발행일',
   summary: '요약',
   featured: '추천',
+  cover: '표지',
 } as const;
 
 export const STATUS_PUBLISHED = '발행';
@@ -65,8 +67,20 @@ export type Novel = {
   tags: string[];
   publishedAt: string | null;
   featured: boolean;
+  cover: string | null;
 };
 
 export type NotionBlock = BlockObjectResponse & {
   children: NotionBlock[];
+};
+
+/**
+ * 소설 페이지 하위의 챕터(하위 페이지) 하나.
+ * 별도 slug 속성이 없으므로 Notion에 정렬된 순서를 그대로 1부터 매겨
+ * /novel/[slug]/[index] URL에 쓴다.
+ */
+export type NovelChapter = {
+  id: string;
+  title: string;
+  index: number;
 };
