@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { Post } from '@/types/notion';
 import Tag from './post-tag';
 
@@ -7,20 +8,22 @@ import Tag from './post-tag';
  **/
 export default function PostItem({ post }: { post: Post }) {
   return (
-    <li className='flex gap-8 py-6 border-b border-slate-300'>
-      <span className='w-11 lg:w-fit text-slate-400'>{post.publishedAt}</span>
-      <div className='space-y-2'>
-        <h1 className='text-4xl font-song'>{post.title}</h1>
-        <h2 className='mb-2 text-sm text-slate-400 break-all'>
-          {post.summary}
-        </h2>
-        <div className='flex items-center gap-3'>
-          <span className='text-slate-400'>{post.category}</span>
-          {post.tags.map((el, i) => (
-            <Tag key={i}>{el}</Tag>
-          ))}
+    <li className='border-b border-slate-300'>
+      <Link href={`/post/${post.slug}`} className='flex gap-8 py-6'>
+        <span className='w-11 lg:w-fit text-slate-400'>{post.publishedAt}</span>
+        <div className='space-y-2'>
+          <h1 className='text-4xl font-song'>{post.title}</h1>
+          <h2 className='mb-2 text-sm text-slate-400 break-all'>
+            {post.summary}
+          </h2>
+          <div className='flex items-center gap-3'>
+            <span className='text-slate-400'>{post.category}</span>
+            {post.tags.map((el, i) => (
+              <Tag key={i}>{el}</Tag>
+            ))}
+          </div>
         </div>
-      </div>
+      </Link>
     </li>
   );
 }
