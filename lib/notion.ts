@@ -4,8 +4,19 @@ import type {
   QueryDataSourceParameters,
 } from '@notionhq/client/build/src/api-endpoints';
 import { unstable_cache } from 'next/cache';
-import { PROP, PROP_NOVEL, STATUS_PUBLISHED } from '@/types/notion';
-import type { Novel, NotionBlock, NovelChapter, Post } from '@/types/notion';
+import {
+  PROP,
+  PROP_GALLERY,
+  PROP_NOVEL,
+  STATUS_PUBLISHED,
+} from '@/types/notion';
+import type {
+  GalleryItem,
+  Novel,
+  NotionBlock,
+  NovelChapter,
+  Post,
+} from '@/types/notion';
 
 /**
  * Notion 쪽 편집을 감지해 즉시 무효화하는 웹훅은 없다. 시간 기반으로만 재검증한다.
@@ -15,6 +26,7 @@ import type { Novel, NotionBlock, NovelChapter, Post } from '@/types/notion';
 const REVALIDATE_SECONDS = 60 * 5;
 const CACHE_TAG = 'notion-posts';
 const CACHE_TAG_NOVELS = 'notion-novels';
+const CACHE_TAG_GALLERY = 'notion-gallery';
 
 let cachedClient: Client | null = null;
 
@@ -49,6 +61,16 @@ function getNovelDataSourceId(): string {
   if (!dataSourceId) {
     throw new Error(
       '[notion] NOTION_NOVEL_DATA_SOURCE_ID가 설정되어 있지 않습니다.',
+    );
+  }
+  return dataSourceId;
+}
+
+function getGalleryDataSourceId(): string {
+  const dataSourceId = process.env.NOTION_GALLERY_DATA_SOURCE_ID;
+  if (!dataSourceId) {
+    throw new Error(
+      '[notion] NOTION_GALLERY_DATA_SOURCE_ID가 설정되어 있지 않습니다.',
     );
   }
   return dataSourceId;
@@ -161,6 +183,50 @@ function toNovel(page: PageObjectResponse): Novel | null {
   };
 }
 
+function toGalleryItem(page: PageObjectResponse): GalleryItem | null {
+  const { properties } = page;
+
+  const titleProp = properties[PROP_GALLERY.title];
+  const slugProp = properties[PROP_GALLERY.slug];
+  const summaryProp = properties[PROP_GALLERY.summary];
+  const publishedAtProp = properties[PROP_GALLERY.publishedAt];
+  const collectionProp = properties[PROP_GALLERY.collection];
+  const photoProp = properties[PROP_GALLERY.photo];
+
+  if (titleProp?.type !== 'title' || slugProp?.type !== 'url') {
+    return null;
+  }
+
+  const title = titleProp.title.map((t) => t.plain_text).join('');
+  const slug = slugProp.url ?? '';
+  if (!title || !slug) return null;
+
+  const summary =
+    summaryProp?.type === 'rich_text'
+      ? summaryProp.rich_text.map((t) => t.plain_text).join('')
+      : '';
+  const publishedAt =
+    publishedAtProp?.type === 'last_edited_time'
+      ? new Date(publishedAtProp.last_edited_time ?? null).toLocaleDateString(
+          'ko-KR',
+          { timeZone: 'Asia/Seoul' },
+        )
+      : null;
+  const collection =
+    collectionProp?.type === 'select'
+      ? (collectionProp.select?.name ?? '')
+      : '';
+  const photoFile =
+    photoProp?.type === 'files' ? photoProp.files[0] : undefined;
+  const photo = photoFile
+    ? photoFile.type === 'external'
+      ? photoFile.external.url
+      : photoFile.file.url
+    : null;
+
+  return { id: page.id, slug, title, summary, collection, publishedAt, photo };
+}
+
 async function queryDataSource<T>(
   dataSourceId: string,
   filter: QueryDataSourceParameters['filter'],
@@ -195,6 +261,17 @@ async function queryNovels(
     filter,
     PROP_NOVEL.publishedAt,
     toNovel,
+  );
+}
+
+async function queryGalleryItems(
+  filter: QueryDataSourceParameters['filter'],
+): Promise<GalleryItem[]> {
+  return queryDataSource(
+    getGalleryDataSourceId(),
+    filter,
+    PROP_GALLERY.publishedAt,
+    toGalleryItem,
   );
 }
 
@@ -389,4 +466,28 @@ export const getFeaturedNovel = unstable_cache(
   },
   ['notion-featured-novel'],
   { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAG_NOVELS] },
+);
+
+export const getPublishedGalleryItems = unstable_cache(
+  async (): Promise<GalleryItem[]> =>
+    queryGalleryItems({
+      property: PROP_GALLERY.status,
+      select: { equals: STATUS_PUBLISHED },
+    }),
+  ['notion-published-gallery'],
+  { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAG_GALLERY] },
+);
+
+export const getGalleryItemBySlug = unstable_cache(
+  async (slug: string): Promise<GalleryItem | null> => {
+    const items = await queryGalleryItems({
+      and: [
+        { property: PROP_GALLERY.status, select: { equals: STATUS_PUBLISHED } },
+        { property: PROP_GALLERY.slug, url: { equals: slug } },
+      ],
+    });
+    return items[0] ?? null;
+  },
+  ['notion-gallery-by-slug'],
+  { revalidate: REVALIDATE_SECONDS, tags: [CACHE_TAG_GALLERY] },
 );
