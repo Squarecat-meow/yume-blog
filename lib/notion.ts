@@ -11,40 +11,8 @@ import { unstable_cache } from "next/cache";
  * 관리자 트리거를 추가한다 (ENDPOINTS.md의 /api/admin/revalidate).
  */
 const REVALIDATE_SECONDS = 60 * 5;
-const CACHE_TAG = "notion-posts";
-
-/**
- * 포스트 DB에 기대하는 속성 이름.
- * Notion 쪽 데이터베이스를 이 이름/타입으로 맞춰서 만든다.
- *
- * - 제목 (title)
- * - 글 URL (url, 고유)
- * - 상태 (select: 초안 | 발행)
- * - 태그 (multi_select)
- * - 발행일 (date)
- * - 요약 (rich_text)
- */
-const PROP = {
-  title: "제목",
-  category: "카테고리",
-  slug: "글 URL",
-  status: "상태",
-  tags: "태그",
-  publishedAt: "발행일",
-  summary: "요약",
-} as const;
-
-const STATUS_PUBLISHED = "발행";
-
-export type Post = {
-  id: string;
-  slug: string;
-  category: string;
-  title: string;
-  summary: string;
-  tags: string[];
-  publishedAt: string | null;
-};
+const CACHE_TAG = 'notion-posts';
+const CACHE_TAG_NOVELS = 'notion-novels';
 
 let cachedClient: Client | null = null;
 
